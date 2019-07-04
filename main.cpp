@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <wiringPi.h>
 
 #define PIN5 21
@@ -81,6 +82,36 @@ void shiftZeros(int pins)
     delayMicroseconds(1);
 }
 
+void displayRow(string row)
+{
+    if (row.size() > 1)
+    {
+        int current = 0;
+        while (true)
+        {
+            int n = 0;
+            char bit = row[current];
+            while (bit == row[current + n] && current + n < row.size())
+            {
+                n++;
+            }
+            current += n;
+            if (bit == '1')
+            {
+                shiftOnes(n);
+            }
+            else
+            {
+                shiftZeros(n);
+            }
+            if (current == row.size())
+            {
+                break;
+            }
+        }
+    }
+}
+
 int main()
 {
     setup();
@@ -110,7 +141,7 @@ int main()
             shiftZeros(8);
         }
         delay(100);
-        
+
         clearAll();
         for (int i = 0; i < 8; i++)
         {
