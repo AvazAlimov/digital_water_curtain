@@ -1,7 +1,13 @@
-#define _PIN5 8
-#define _PIN6 9
-#define _PIN13 10
-#define _PIN19 11
+#include <SPI.h>
+#include <SD.h>
+
+#define _PIN5 5
+#define _PIN6 6
+#define _PIN13 7
+#define _PIN19 8
+
+File myFile;
+String buffer;
 
 void setup()
 {
@@ -9,6 +15,20 @@ void setup()
     pinMode(_PIN6, OUTPUT);
     pinMode(_PIN13, OUTPUT);
     pinMode(_PIN19, OUTPUT);
+
+    Serial.begin(9600);
+    while (!Serial)
+    {
+        ;
+    }
+    Serial.print("Initializing SD card...");
+    if (!SD.begin(4))
+    {
+        Serial.println("initialization failed!");
+        while (1)
+            ;
+    }
+    Serial.println("initialization done.");
 }
 
 void clearAll()
@@ -112,23 +132,52 @@ void center(bool inverse, int size)
     }
 }
 
+void displayRow(String row)
+{
+    if (row.length() > 1)
+    {
+        int current = 0;
+        while (true)
+        {
+            int n = 0;
+            char bit = row.charAt(current);
+            while (bit == row.charAt(current + n) && current + n < row.length())
+            {
+                n++;
+            }
+            current += n;
+            if (bit == '1')
+            {
+                shiftOnes(n);
+            }
+            else
+            {
+                shiftZeros(n);
+            }
+            if (current == row.length())
+            {
+                break;
+            }
+        }
+    }
+}
+
 void loop()
 {
-    clearAll();
-    for (int i = 2; i <= 128; i += 2)
+    myFile = SD.open("data.txt");
+    if (myFile)
     {
-        center(false, i);
-        delay(10);
+        while (myFile.available())
+        {
+            buffer = myFile.readStringUntil('\n');
+            clearAll();
+            displayRow(String(buffer));
+            delay(50);
+        }
+        myFile.close();
     }
-    clearAll();
-    for (int i = 128; i >= 0; i -= 2)
+    else
     {
-        center(false, i);
-        delay(10);
+        Serial.println("error opening file");
     }
-
-    move(false, 8, 20);
-    move(true, 8, 20);
-    for (int i = 1; i <= 64; i *= 2)
-        alternate(10, i, 100);
 }
